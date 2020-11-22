@@ -1,0 +1,10 @@
+### Jekyll
+index.markdown
+_site
+.sass-cache
+.jekyll-cache
+.jekyll-metadata
+vendor
+
+### JetBrains
+.idea
