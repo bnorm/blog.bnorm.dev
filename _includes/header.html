@@ -1,0 +1,27 @@
+<div class="header">
+	<aside class="logo">
+
+		{% if page.url == '/index.html' or page.url == '/' %}
+			{% assign link = '/about' %}
+			{% assign prompt = 'About the Author' %}
+		{% else %}
+			{% assign link = '/' %}
+			{% assign prompt = 'Back to Index' %}
+		{% endif %}
+
+		<a href="{{ link | prepend: site.baseurl | prepend: site.url }}">
+			<img src="{{ site.logo_url }}" alt="" class="logo-avatar">
+		</a>
+		<span class="logo-prompt code">{{ prompt }}</span>
+
+	</aside>
+
+	<div class="social-media-list">
+		<div>
+			<a href="https://github.com/{{ site.github_username }}"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#github"></use></svg> {{ site.github_username }}</a>
+		</div>
+		<div>
+			<a href="https://www.twitter.com/{{ site.twitter_username }}"><svg class="svg-icon"><use xlink:href="/assets/minima-social-icons.svg#twitter"></use></svg> {{ site.twitter_username }}</a>
+		</div>
+	</div>
+</div>
