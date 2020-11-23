@@ -8,3 +8,4 @@ vendor
 
 ### JetBrains
 .idea
+*.iml
