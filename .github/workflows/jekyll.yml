@@ -1,9 +1,6 @@
 name: Build and deploy Jekyll site to GitHub Pages
 
-on:
-  push:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   jekyll:
@@ -12,6 +9,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses:  helaili/jekyll-action@2.0.4
-        env:
-          JEKYLL_PAT: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "::set-output name=RUBY_VERSION::$(cat .ruby-version)"
+        id: rbenv
+
+      - uses: actions/setup-ruby@v1
+        with:
+          ruby-version: "${{ steps.rbenv.outputs.RUBY_VERSION }}"
+
+      - run: bundle install --path vendor/bundle
+      - run: bundle exec jekyll build
+
+      - name: Deploy blog
+        if: ${{ github.ref == 'refs/heads/main' && github.repository == 'bnorm/blog.bnorm.dev' }}
+        uses: JamesIves/github-pages-deploy-action@releases/v3
+        with:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BRANCH: site
+          FOLDER: _site
+          CLEAN: true
