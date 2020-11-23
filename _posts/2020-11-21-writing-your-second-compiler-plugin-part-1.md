@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Writing Your Second Kotlin Compiler Plugin, Part 1 — Project Setup
+tweet: https://twitter.com/bnormcodes/status/1330241400391262209?s=20
 ---
 
 > At the time of writing this article, [Kotlin compatibility] for IR backend is in Alpha status and
