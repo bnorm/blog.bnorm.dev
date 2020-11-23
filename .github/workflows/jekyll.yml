@@ -16,7 +16,10 @@ jobs:
         with:
           ruby-version: "${{ steps.rbenv.outputs.RUBY_VERSION }}"
 
-      - run: bundle install --path vendor/bundle
+      - run: |
+          gem install bundler
+          bundle install --path vendor/bundle
+
       - run: bundle exec jekyll build
 
       - name: Deploy blog
