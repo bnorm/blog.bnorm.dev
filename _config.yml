@@ -32,6 +32,8 @@ twitter_username: bnormcodes
 github_username:  bnorm
 logo_url: https://avatars2.githubusercontent.com/u/1074449?v=4
 
+google_analytics: G-SH69BHV31K
+
 kramdown:
   syntax_highlighter: rouge
   input: GFM

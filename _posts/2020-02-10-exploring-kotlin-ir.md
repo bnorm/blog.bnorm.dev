@@ -6,7 +6,7 @@ tweet: https://twitter.com/bnormcodes/status/1226929535620390912?s=20
 
 > At the time of writing this article, Kotlin IR is experimental. As such, information contained in
 > this article about IR could be out-of-date or incorrect. If official documentation for Kotlin IR
->exists, please refer to it first.
+> exists, please refer to it first.
 
 Ever since learning about them, I’ve been very interested in Kotlin compiler plugins. Even the
 [limited list of official supported plugins][official-plugins] hint at the potential available. A
