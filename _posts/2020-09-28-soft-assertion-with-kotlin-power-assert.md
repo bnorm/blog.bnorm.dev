@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Soft Assertion with kotlin-power-assert
+description: Soft Assertion with kotlin-power-assert
 tweet: https://twitter.com/bnormcodes/status/1310759111382966275?s=20
 ---
 

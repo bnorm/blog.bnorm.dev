@@ -1,6 +1,7 @@
 ---
 layout: post
 title: '"Unused" Type Parameters on Kotlin Inline Classes'
+description: '"Unused" Type Parameters on Kotlin Inline Classes'
 tweet: https://twitter.com/bnormcodes/status/1155875415740899329?s=20
 ---
 

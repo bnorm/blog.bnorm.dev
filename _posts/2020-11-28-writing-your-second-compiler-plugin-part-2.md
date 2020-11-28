@@ -2,6 +2,7 @@
 layout: post
 title: Writing Your Second Kotlin Compiler Plugin, Part 2 — Inspecting Kotlin IR
 description: Inspecting Kotlin IR
+tweet: https://twitter.com/bnormcodes/status/1332744643633623041?s=20
 ---
 
 > At the time of writing this article, [Kotlin compatibility] for IR backend is in Alpha status and

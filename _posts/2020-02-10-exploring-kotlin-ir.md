@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Exploring Kotlin IR
+description: Exploring Kotlin IR
 tweet: https://twitter.com/bnormcodes/status/1226929535620390912?s=20
 ---
 

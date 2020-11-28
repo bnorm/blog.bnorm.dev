@@ -1,6 +1,7 @@
 ---
 layout: post
 title: React Functional Components with Kotlin/JS
+description: React Functional Components with Kotlin/JS
 ---
 
 I’ve been playing with Kotlin/JS and React lately. I’ve been wanting to learn more about frontend

@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Kotlin OptIn Annotation as a Scoping Tool
+description: Kotlin OptIn Annotation as a Scoping Tool
 tweet: https://twitter.com/bnormcodes/status/1264305096546025473?s=20
 ---
 
