@@ -20,6 +20,26 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
 {% endif %}
 
+<!-- OpenGraph metadatas -->
+<meta name="og:type" content="article">
+<meta name="og:site_name" content="{{ site.title }}">
+{% if page.title %}
+<meta name="og:title" content="{{ page.title }}">
+{% else %}
+<meta name="og:title" content="{{ site.title }}">
+{% endif %}
+{% if page.url %}
+<meta name="og:url" content="{{ site.url }}{{ page.url }}">
+{% endif %}
+{% if page.description %}
+<meta name="og:description" content="{{ page.description }}">
+{% else %}
+<meta name="og:description" content="{{ site.description }}">
+{% endif %}
+{% if page.header-img %}
+<meta name="og:image" content="{{ site.url }}/{{ page.header-img }}">
+{% endif %}
+
 <!-- Twitter cards metadatas -->
 <meta name="twitter:card" content="summary">
 <meta name="twitter:site" content="@bnormcodes">
