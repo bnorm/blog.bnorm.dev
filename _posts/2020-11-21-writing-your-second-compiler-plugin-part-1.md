@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Writing Your Second Kotlin Compiler Plugin, Part 1 — Project Setup
+description: Project Setup
 tweet: https://twitter.com/bnormcodes/status/1330241400391262209?s=20
 ---
 
