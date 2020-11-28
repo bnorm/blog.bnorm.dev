@@ -315,9 +315,13 @@ article {
     border: none;
     font-weight: bold;
   }
-  .social-media-list {
-    list-style: none;
-    margin-left: 0;
+}
+.social-media-list {
+  list-style: none;
+  margin-left: 0;
+  a {
+    border: none;
+    font-weight: bold;
   }
   .svg-icon {
     width: 16px;
