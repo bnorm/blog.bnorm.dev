@@ -108,9 +108,11 @@ article a:hover { color: #369; border-color: #369; }
 
 .page-navigation a, .header a { border: none; font-weight: bold; }
 
-.page-navigation .social-media-list, .header .social-media-list { list-style: none; margin-left: 0; }
+.social-media-list { list-style: none; margin-left: 0; }
 
-.page-navigation .svg-icon, .header .svg-icon { width: 16px; height: 16px; display: inline-block; fill: #828282; padding-right: 5px; vertical-align: text-top; }
+.social-media-list a { border: none; font-weight: bold; }
+
+.social-media-list .svg-icon { width: 16px; height: 16px; display: inline-block; fill: #828282; padding-right: 5px; vertical-align: text-top; }
 
 .footer { text-align: center; max-width: 680px; margin: 0 auto; font-size: 0.8rem; }
 
