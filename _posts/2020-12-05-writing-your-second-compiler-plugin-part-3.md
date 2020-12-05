@@ -2,6 +2,7 @@
 layout: post
 title: Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR
 description: Navigating Kotlin IR
+tweet: https://twitter.com/bnormcodes/status/1335261994769899522?s=20
 ---
 
 > At the time of writing this article, [Kotlin compatibility] for IR backend is in Alpha status and
