@@ -1,4 +1,213 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2020-12-05T18:55:09+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR" /><published>2020-12-05T00:00:00+00:00</published><updated>2020-12-05T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3">&lt;blockquote&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2020-12-12T18:07:18+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR" /><published>2020-12-12T00:00:00+00:00</published><updated>2020-12-12T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4">&lt;blockquote&gt;
+  &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
+the compiler plugin API is Experimental. As such, information contained in this article about IR
+and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
+refer to it first.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;Now that we know how to navigate Kotlin IR from &lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3&lt;/a&gt;, we can start talking about how to
+transform Kotlin IR, right? Well we have one more topic we need to cover first: building Kotlin IR.
+Transforming Kotlin IR works by adding, removing, or replacing IR elements, so we need to know how
+to build them first!&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1 - Project Setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2 - Inspecting Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;Part 5 - Transforming Kotlin IR&lt;/li&gt;
+  &lt;li&gt;Part 6 - ?&lt;/li&gt;
+  &lt;li&gt;Part ? - Publishing a Kotlin Compiler Plugin&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;building-context&quot;&gt;Building Context&lt;/h1&gt;
+
+&lt;p&gt;Back in &lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1&lt;/a&gt; we learned about the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrGenerationExtension.kt&quot;&gt;IrGenerationExtension&lt;/a&gt; interface which is the entry point for
+a compiler plugin to generate or transform Kotlin IR. We talked briefly about the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrModuleFragment&lt;/code&gt;
+parameter in &lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2&lt;/a&gt;, but now we need to talk about the other parameter, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrPluginContext&lt;/code&gt;. A
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt&quot;&gt;IrPluginContext&lt;/a&gt; provides contextual information to the plugin about things outside the current
+module being compiled.&lt;/p&gt;
+
+&lt;p&gt;From the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt&quot;&gt;IrPluginContext&lt;/a&gt; instance, we can obtain an instance of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt&quot;&gt;IrFactory&lt;/a&gt;. This factory class is
+how a Kotlin compiler plugin can create its own IR elements. It contains many functions for building
+instances of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt#L28&quot;&gt;IrClass&lt;/a&gt;, &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt#L89&quot;&gt;IrSimpleFunction&lt;/a&gt;,
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt#L136&quot;&gt;IrProperty&lt;/a&gt;, and much more. But probably more important, there are also quite a few
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/ir/builders/declarations/declarationBuilders.kt&quot;&gt;extension functions&lt;/a&gt; which make building IR declarations easier.&lt;/p&gt;
+
+&lt;p&gt;&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt&quot;&gt;IrFactory&lt;/a&gt; is useful when building declarations: classes, functions, properties, etc, but when
+building statements and expressions, you will need an instance of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L31&quot;&gt;IrBuilder&lt;/a&gt;. More importantly, you
+will need an instance of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L37&quot;&gt;IrBuilderWithScope&lt;/a&gt;. With this builder instance, a lot more &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/ExpressionHelpers.kt&quot;&gt;extension
+functions&lt;/a&gt; for IR expressions become available.&lt;/p&gt;
+
+&lt;h1 id=&quot;hello-world-but-make-it-ir&quot;&gt;Hello World, But Make It IR&lt;/h1&gt;
+
+&lt;p&gt;Some of this might make more sense when shown an example, so let’s build the following with IR!&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, World!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;But how do we know what to build? Remember our friend &lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;dump()&lt;/code&gt; from Part 2&lt;/a&gt;? Using
+that utility we can dump the IR tree for the above example.&lt;/p&gt;
+
+&lt;div class=&quot;language-text highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;FUN name:main visibility:public modality:FINAL &amp;lt;&amp;gt; () returnType:kotlin.Unit
+  BLOCK_BODY
+    CALL 'public final fun println (message: kotlin.Any?): kotlin.Unit [inline] declared in kotlin.io.ConsoleKt' type=kotlin.Unit origin=null
+      message: CONST String type=kotlin.String value=&quot;Hello, World!&quot;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;From this we have a blueprint for what to build! Let’s take a look at different sections of the 
+resulting code and then put the whole thing together.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;typeNullableAny&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irBuiltIns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;anyNType&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;typeUnit&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irBuiltIns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unitType&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;From the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt&quot;&gt;IrPluginContext&lt;/a&gt; you can get an instance of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/descriptors/IrBuiltIns.kt&quot;&gt;IrBuiltIns&lt;/a&gt; which provides quick access to
+many things built into the Kotlin language. This includes references to many class types and IR
+symbols. Here we are getting the types &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Any?&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;Unit&lt;/code&gt; as instances of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/types/IrType.kt&quot;&gt;IrType&lt;/a&gt;. These will be
+used later to find the correct &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;println&lt;/code&gt; overload and set the return type of the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;main&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;funPrintln&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;referenceFunctions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FqName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;kotlin.io.println&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;single&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;parameters&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;owner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;valueParameters&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeNullableAny&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If what you need isn’t built into the language itself, but rather comes from a dependency (like the
+standard library), you can use the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrPluginContext.reference*()&lt;/code&gt; functions to find the needed
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/symbols/IrSymbol.kt#L27&quot;&gt;IrSymbol&lt;/a&gt;. An &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/symbols/IrSymbol.kt#L27&quot;&gt;IrSymbol&lt;/a&gt; allows for a lazy reference to an &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/IrElement.kt#L23&quot;&gt;IrElement&lt;/a&gt;, and as such it has a
+property &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;owner&lt;/code&gt; which links to the referenced &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/IrElement.kt#L23&quot;&gt;IrElement&lt;/a&gt;. Here we are getting the
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/symbols/IrSymbol.kt#L93&quot;&gt;IrFunctionSymbol&lt;/a&gt; for the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;println(message: Any?)&lt;/code&gt; function.&lt;/p&gt;
+
+&lt;p&gt;Since function overloading is supported in Kotlin, there can be multiple functions with the same
+fully-qualified name, so we need to filter the returned functions to a single function with the
+desired signature.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;funMain&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;buildFun&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;identifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;main&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;visibility&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DescriptorVisibilities&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;PUBLIC&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// default&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;modality&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Modality&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FINAL&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// default&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;returnType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeUnit&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Using the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFactory.kt&quot;&gt;IrFactory&lt;/a&gt; instance from the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt&quot;&gt;IrPluginContext&lt;/a&gt; we can build a function using the
+extension function &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;buildFun&lt;/code&gt;. This function takes a lambda with receiver of type
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/declarations/IrFunctionBuilder.kt&quot;&gt;IrFunctionBuilder&lt;/a&gt; which allows for setting various properties like name, visibility, modality, and
+the return type, all of which we are setting here even though some have default values.&lt;/p&gt;
+
+&lt;p&gt;You do not need to set a body as part of building the initial function definition. This is because
+not all functions have bodies! Kotlin has many cases when a function body isn’t required like
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;abstract&lt;/code&gt; and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;expect&lt;/code&gt; function definitions.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;funMain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;body&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DeclarationIrBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;funMain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;symbol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;irBlockBody&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;callPrintln&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;irCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;funPrintln&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;callPrintln&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;putValueArgument&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;irString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, World!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;callPrintln&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you do want to add a body to the function you can do so by setting the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;body&lt;/code&gt; property of the
+built &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrFunction.kt#L31&quot;&gt;IrFunction&lt;/a&gt;. To do so you will need an instance of &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L37&quot;&gt;IrBuilderWithScope&lt;/a&gt; which is created here
+as a &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower/LowerUtils.kt#L42&quot;&gt;DeclarationIrBuilder&lt;/a&gt;. From this builder you will have access to &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/ExpressionHelpers.kt&quot;&gt;many builder extension
+functions&lt;/a&gt; including the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irBlockBody&lt;/code&gt; function used here. The &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irBlockBody&lt;/code&gt;
+takes a lambda with receiver of type &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L58&quot;&gt;IrBlockBodyBuilder&lt;/a&gt; which is also a &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L37&quot;&gt;IrBuilderWithScope&lt;/a&gt;
+allowing other builder extension functions to be used.&lt;/p&gt;
+
+&lt;p&gt;From within an &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders/IrBuilder.kt#L58&quot;&gt;IrBlockBodyBuilder&lt;/a&gt;, a function call can be created via the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irCall&lt;/code&gt; function and a
+string constant can be created via the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irString&lt;/code&gt; function. Combine these together to create a call
+to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;println&lt;/code&gt; with the parameter value &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&quot;Hello, World!&quot;&lt;/code&gt;. This function call can be added to the
+surrounding block body using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;+&lt;/code&gt; operator on the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/expressions/IrCall.kt#L22&quot;&gt;IrCall&lt;/a&gt;. Otherwise we would have created the
+function call but not put it anywhere!&lt;/p&gt;
+
+&lt;p&gt;Putting all these sections together, and using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;also&lt;/code&gt; scoping function to remove temporary local
+variables, will result in the following. This example should print out a dump of the built IR which
+is exactly the same as what we started with; success!&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;generate&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;moduleFragment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrModuleFragment&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrPluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;typeNullableAny&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irBuiltIns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;anyNType&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;typeUnit&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irBuiltIns&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;unitType&lt;/span&gt;
+
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;funPrintln&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;referenceFunctions&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FqName&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;kotlin.io.println&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;single&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;parameters&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;owner&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;valueParameters&lt;/span&gt;
+      &lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;size&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;amp;&amp;amp;&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;parameters&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;].&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;type&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeNullableAny&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;funMain&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;irFactory&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;buildFun&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;name&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;identifier&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;main&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;visibility&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DescriptorVisibilities&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;PUBLIC&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// default&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;modality&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Modality&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;FINAL&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;// default&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;returnType&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;typeUnit&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;also&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&amp;gt;&lt;/span&gt;
+    &lt;span class=&quot;n&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;body&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;DeclarationIrBuilder&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pluginContext&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;symbol&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;irBlockBody&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;irCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;funPrintln&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;also&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;call&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;-&amp;gt;&lt;/span&gt;
+        &lt;span class=&quot;n&quot;&gt;call&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;putValueArgument&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;irString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;Hello, World!&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+      &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+  &lt;span class=&quot;nf&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;funMain&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;dump&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;h1 id=&quot;origin-story&quot;&gt;Origin Story&lt;/h1&gt;
+
+&lt;p&gt;The pattern of dumping Kotlin IR and recreating is the pattern I most often use when attempting to
+create IR elements. However, sometimes it doesn’t work so well. For example, consider the following
+data class.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;data class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;age&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;email&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;If you dump the IR tree for this class it is 181 lines long! Because of all the code generation that
+happens behind a data class, it becomes difficult to manually generate efficiently. All of this
+generation takes place during the conversion between the compiler frontend (PSI/FIR) to the compiler
+backend (IR). However, it does hint at something which can be useful so let’s take a look at a small
+section of the IR dump.&lt;/p&gt;
+
+&lt;div class=&quot;language-text highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;FUN GENERATED_DATA_CLASS_MEMBER name:component1 visibility:public modality:FINAL &amp;lt;&amp;gt; ($this:&amp;lt;root&amp;gt;.Person) returnType:kotlin.String [operator]
+  $this: VALUE_PARAMETER name:&amp;lt;this&amp;gt; type:&amp;lt;root&amp;gt;.Person
+  BLOCK_BODY
+    RETURN type=kotlin.Nothing from='public final fun component1 (): kotlin.String [operator] declared in &amp;lt;root&amp;gt;.Person'
+      GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:name type:kotlin.String visibility:private [final]' type=kotlin.String origin=null
+        receiver: GET_VAR '&amp;lt;this&amp;gt;: &amp;lt;root&amp;gt;.Person declared in &amp;lt;root&amp;gt;.Person.component1' type=&amp;lt;root&amp;gt;.Person origin=null
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;This is the IR for the generated &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fun component1(): String&lt;/code&gt; function of the data class which will
+return the name of the person. Notice the big &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;GENERATED_DATA_CLASS_MEMBER&lt;/code&gt; text right near the
+beginning of the dump? This is the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrDeclarationOrigin.kt#L19&quot;&gt;IrDeclarationOrigin&lt;/a&gt; property of the function that all
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/declarations/IrDeclaration.kt#L37&quot;&gt;IrDeclaration&lt;/a&gt; elements have. The origin of a declaration describes what Kotlin source code
+construct compilation resulted in that particular declaration. In our example, this function
+originated from a data class.&lt;/p&gt;
+
+&lt;p&gt;There is also a &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/expressions/IrStatementOrigin.kt#L23&quot;&gt;IrStatementOrigin&lt;/a&gt; class which is the same for many different subtypes of
+&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/IrElement.kt#L37&quot;&gt;IrStatement&lt;/a&gt; which includes the likes of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DO_WHILE_LOOP&lt;/code&gt;, &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;ELVIS&lt;/code&gt;, and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;RANGE&lt;/code&gt;. From these types,
+and if you have the Kotlin source code opened with IntelliJ, you can navigate to the code which
+generates the IR code for corresponding construct. For example, if you search for &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DO_WHILE_LOOP&lt;/code&gt;,
+you will find the &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.psi2ir/src/org/jetbrains/kotlin/psi2ir/generators/LoopExpressionGenerator.kt#L55&quot;&gt;LoopExpressionGenerator&lt;/a&gt; class which has a function called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;generateDoWhileLoop&lt;/code&gt;
+which can generate a do-while loop &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrExpression&lt;/code&gt; from a &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KtDoWhileExpression&lt;/code&gt;.&lt;/p&gt;
+
+&lt;p&gt;If you are attempting to build an IR element and do not know what functions to call to build it,
+often the easiest thing is to search the Kotlin compiler for examples of similar IR elements. Having
+a local instance of the Kotlin repository which has been indexed by IntelliJ is very import since
+there is no official documentation for a compiler plugin API.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Hopefully this article provided you with a good foundation for building IR elements. If you are
+struggling with the concepts of code generation in general, you might want to check out something
+like &lt;a href=&quot;https://square.github.io/kotlinpoet/&quot;&gt;KotlinPoet&lt;/a&gt; which generates Kotlin source code instead of IR and is extremely well documented.
+Since &lt;a href=&quot;https://square.github.io/kotlinpoet/&quot;&gt;KotlinPoet&lt;/a&gt; generates text output it is also easier to experiment with different However, if
+you want to jump feet first into building some Kotlin IR elements, check out my &lt;a href=&quot;https://github.com/bnorm/kotlin-ir-plugin-template&quot;&gt;GitHub template&lt;/a&gt;
+project for IR based Kotlin compile plugins!&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR" /><published>2020-12-05T00:00:00+00:00</published><updated>2020-12-05T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3">&lt;blockquote&gt;
   &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
 the compiler plugin API is Experimental. As such, information contained in this article about IR
 and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
@@ -12,7 +221,7 @@ the Kotlin IR tree and inspect specific elements.&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1 - Project Setup&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2 - Inspecting Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 4 - Building Kotlin IR&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Part 5 - Transforming Kotlin IR&lt;/li&gt;
   &lt;li&gt;Part 6 - ?&lt;/li&gt;
   &lt;li&gt;Part ? - Publishing a Kotlin Compiler Plugin&lt;/li&gt;
@@ -201,7 +410,7 @@ part we will drive right into the structure of Kotlin IR and what it looks like.
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1 - Project Setup&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2 - Inspecting Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 4 - Building Kotlin IR&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Part 5 - Transforming Kotlin IR&lt;/li&gt;
   &lt;li&gt;Part 6 - ?&lt;/li&gt;
   &lt;li&gt;Part ? - Publishing a Kotlin Compiler Plugin&lt;/li&gt;
@@ -359,7 +568,7 @@ parts we will explore navigating and transforming Kotlin IR.&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1 - Project Setup&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2 - Inspecting Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 4 - Building Kotlin IR&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;Part 5 - Transforming Kotlin IR&lt;/li&gt;
   &lt;li&gt;Part 6 - ?&lt;/li&gt;
   &lt;li&gt;Part ? - Publishing a Kotlin Compiler Plugin&lt;/li&gt;
