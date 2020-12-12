@@ -20,7 +20,7 @@ parts we will explore navigating and transforming Kotlin IR.
 - [Part 1 - Project Setup][Part 1]
 - [Part 2 - Inspecting Kotlin IR][Part 2]
 - [Part 3 - Navigating Kotlin IR][Part 3]
-- Part 4 - Building Kotlin IR
+- [Part 4 - Building Kotlin IR][Part 4]
 - Part 5 - Transforming Kotlin IR
 - Part 6 - ?
 - Part ? - Publishing a Kotlin Compiler Plugin
@@ -311,6 +311,7 @@ this up, you can use the [GitHub template] I created when writing this article.
 [Part 1]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1
 [Part 2]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
+[Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
 [Gradle plugin]: https://github.com/bnorm/kotlin-ir-plugin-template/tree/medium-part1/kotlin-ir-plugin-gradle
 [define with Gradle]: https://github.com/bnorm/kotlin-ir-plugin-template/blob/medium-part1/kotlin-ir-plugin-gradle/build.gradle.kts
 [buildconfig]: https://github.com/gmazzo/gradle-buildconfig-plugin
