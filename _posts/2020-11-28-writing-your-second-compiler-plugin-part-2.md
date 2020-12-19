@@ -17,9 +17,8 @@ part we will drive right into the structure of Kotlin IR and what it looks like.
 - [Part 2 - Inspecting Kotlin IR][Part 2]
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
-- Part 5 - Transforming Kotlin IR
-- Part 6 - ?
-- Part ? - Publishing a Kotlin Compiler Plugin
+- [Part 5 - Transforming Kotlin IR][Part 5]
+- Part 6 - Support Library and Project Publication
 
 # Foundation
 
@@ -172,6 +171,7 @@ statement in Kotlin IR look like? (hint: how are `when` and `if` similar?)
 [Part 2]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
+[Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
 [abstract syntax tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 [IrElement]: https://github.com/JetBrains/kotlin/blob/1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/IrElement.kt
 [statement-vs-expression]: https://blog.kotlin-academy.com/kotlin-programmer-dictionary-statement-vs-expression-e6743ba1aaa0

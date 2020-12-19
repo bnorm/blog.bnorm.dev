@@ -19,9 +19,8 @@ to build them first!
 - [Part 2 - Inspecting Kotlin IR][Part 2]
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
-- Part 5 - Transforming Kotlin IR
-- Part 6 - ?
-- Part ? - Publishing a Kotlin Compiler Plugin
+- [Part 5 - Transforming Kotlin IR][Part 5]
+- Part 6 - Support Library and Project Publication
 
 # Building Context
 
@@ -226,6 +225,7 @@ project for IR based Kotlin compile plugins!
 [Part 2]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
+[Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
 [Part 2-dump]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2
 [IrGenerationExtension]: https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrGenerationExtension.kt
 [IrPluginContext]: https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt
