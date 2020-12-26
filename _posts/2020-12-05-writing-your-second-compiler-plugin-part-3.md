@@ -18,7 +18,7 @@ the Kotlin IR tree and inspect specific elements.
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
 - [Part 5 - Transforming Kotlin IR][Part 5]
-- Part 6 - Support Library and Project Publication
+- [Part 6 - Support Libraries, Publishing, and Integration Testing][Part 6]
 
 # We Got Visitors!
 
@@ -208,6 +208,7 @@ template] for IR based Kotlin compiler plugins!
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
 [Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
+[Part 6]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6
 [Part 1 - Kotlin Plugin]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1#kotlin-plugin
 [abstract syntax tree]: https://en.wikipedia.org/wiki/Abstract_syntax_tree
 [IrElement]: https://github.com/JetBrains/kotlin/blob/1.4.20/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/IrElement.kt
@@ -220,3 +221,4 @@ template] for IR based Kotlin compiler plugins!
 [depth-first traversal]: https://en.wikipedia.org/wiki/Depth-first_search
 [breadth-first traversal]: https://en.wikipedia.org/wiki/Breadth-first_search
 [GitHub template]: https://github.com/bnorm/kotlin-ir-plugin-template
+[debuglog]: https://github.com/bnorm/debuglog

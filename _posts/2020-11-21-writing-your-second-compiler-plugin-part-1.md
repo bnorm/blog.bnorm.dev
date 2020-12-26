@@ -22,7 +22,7 @@ parts we will explore navigating and transforming Kotlin IR.
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
 - [Part 5 - Transforming Kotlin IR][Part 5]
-- Part 6 - Support Library and Project Publication
+- [Part 6 - Support Libraries, Publishing, and Integration Testing][Part 6]
 
 # Setup
 
@@ -312,6 +312,7 @@ this up, you can use the [GitHub template] I created when writing this article.
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
 [Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
+[Part 6]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6
 [Gradle plugin]: https://github.com/bnorm/kotlin-ir-plugin-template/tree/medium-part1/kotlin-ir-plugin-gradle
 [define with Gradle]: https://github.com/bnorm/kotlin-ir-plugin-template/blob/medium-part1/kotlin-ir-plugin-gradle/build.gradle.kts
 [buildconfig]: https://github.com/gmazzo/gradle-buildconfig-plugin
@@ -329,3 +330,4 @@ this up, you can use the [GitHub template] I created when writing this article.
 [`kotlin-compile-testing`]: https://github.com/tschuchortdev/kotlin-compile-testing
 [compile Kotlin source strings]: https://github.com/bnorm/kotlin-ir-plugin-template/blob/medium-part1/kotlin-ir-plugin/src/test/kotlin/com/bnorm/template/IrPluginTest.kt
 [GitHub template]: https://github.com/bnorm/kotlin-ir-plugin-template
+[debuglog]: https://github.com/bnorm/debuglog

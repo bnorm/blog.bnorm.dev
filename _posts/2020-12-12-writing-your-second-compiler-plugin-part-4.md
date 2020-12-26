@@ -20,7 +20,7 @@ to build them first!
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
 - [Part 5 - Transforming Kotlin IR][Part 5]
-- Part 6 - Support Library and Project Publication
+- [Part 6 - Support Libraries, Publishing, and Integration Testing][Part 6]
 
 # Building Context
 
@@ -218,7 +218,7 @@ struggling with the concepts of code generation in general, you might want to ch
 like [KotlinPoet] which generates Kotlin source code instead of IR and is extremely well documented.
 Since [KotlinPoet] generates text output it is also easier to experiment with different However, if
 you want to jump feet first into building some Kotlin IR elements, check out my [GitHub template]
-project for IR based Kotlin compile plugins!
+project for IR based Kotlin compiler plugins!
 
 [Kotlin compatibility]: https://kotlinlang.org/docs/reference/evolution/components-stability.html
 [Part 1]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1
@@ -226,6 +226,7 @@ project for IR based Kotlin compile plugins!
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
 [Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
+[Part 6]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6
 [Part 2-dump]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2
 [IrGenerationExtension]: https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrGenerationExtension.kt
 [IrPluginContext]: https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/extensions/IrPluginContext.kt
@@ -254,3 +255,4 @@ project for IR based Kotlin compile plugins!
 [LoopExpressionGenerator]: https://github.com/JetBrains/kotlin/blob/v1.4.20/compiler/ir/ir.psi2ir/src/org/jetbrains/kotlin/psi2ir/generators/LoopExpressionGenerator.kt#L55
 [KotlinPoet]: https://square.github.io/kotlinpoet/
 [GitHub template]: https://github.com/bnorm/kotlin-ir-plugin-template
+[debuglog]: https://github.com/bnorm/debuglog

@@ -18,7 +18,7 @@ now have the tools needed to transform Kotlin IR. This is a long one, so let's g
 - [Part 3 - Navigating Kotlin IR][Part 3]
 - [Part 4 - Building Kotlin IR][Part 4]
 - [Part 5 - Transforming Kotlin IR][Part 5]
-- Part 6 - Support Library and Project Publication
+- [Part 6 - Support Libraries, Publishing, and Integration Testing][Part 6]
 
 # Déjà Vu
 
@@ -440,10 +440,6 @@ Hello, World!
 
 ---
 
-Next week I'll show how to create a support library for your compiler plugin which can contain
-annotations and other things needed by your compiler plugin. Also I'll give some general guidance on
-publishing your library to be used in another project.
-
 I know this article was longer than usual and full of a lot of new things, but see if you can put
 the pieces together and get something working! Can you make it so *all* functions in a *class* or
 even *file* annotated with `@DebugLog` are transformed? (Hint:
@@ -451,9 +447,9 @@ even *file* annotated with `@DebugLog` are transformed? (Hint:
 `irDebugExit` functions abstract so different logging frameworks and message formats could be used
 by different implementations of `DebugLogTransformer`?
 
-For the next part in this series I'll have a working repository of this example compiler plugin for
-you to explore. But in the meantime, if you want to try creating your own Kotlin compiler plugin,
-take a look at the [GitHub template] repository I created.
+If you want to check out a working Kotlin compiler plugin created from all the code snippets above,
+you can check out the [debuglog] repository. And if you want to try creating your own Kotlin
+compiler plugin, take a look at the [GitHub template] repository I created. 
 
 [Kotlin compatibility]: https://kotlinlang.org/docs/reference/evolution/components-stability.html
 [kevin-most-kotlinconf]: https://www.youtube.com/watch?v=w-GMlaziIyo
@@ -463,6 +459,7 @@ take a look at the [GitHub template] repository I created.
 [Part 3]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3
 [Part 4]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4
 [Part 5]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5
+[Part 6]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6
 [part-4-null-body]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4#hello-world-but-make-it-ir
 [part-4-println]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4#hello-world-but-make-it-ir
 [part-1-testing]: https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1#kotlin-plugin---testing
