@@ -2,6 +2,7 @@
 layout: post
 title: Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing
 description: Support Libraries, Publishing, and Integration Testing
+tweet: https://twitter.com/bnormcodes/status/1342868320480088064?s=20
 ---
 
 > At the time of writing this article, [Kotlin compatibility] for IR backend is in Alpha status and
