@@ -1,4 +1,129 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2020-12-19T16:49:21+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 5 — Transforming Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 5 — Transforming Kotlin IR" /><published>2020-12-19T00:00:00+00:00</published><updated>2020-12-19T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5">&lt;blockquote&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2020-12-26T16:13:19+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing" /><published>2020-12-23T00:00:00+00:00</published><updated>2020-12-23T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6">&lt;blockquote&gt;
+  &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
+the compiler plugin API is Experimental. As such, information contained in this article about IR
+and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
+refer to it first.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;p&gt;As I wrap up this series of articles, there are a couple additional topics I wanted to cover in
+regards to Kotlin compiler plugins. None of these were worth a dedicated article, as they are each
+relatively small topics. Namely the ideas of support libraries, integration testing, and publishing
+a compiler plugin.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1&quot;&gt;Part 1 - Project Setup&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-2&quot;&gt;Part 2 - Inspecting Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;support-libraries&quot;&gt;Support Libraries&lt;/h1&gt;
+
+&lt;p&gt;A support library is required for a Kotlin compiler plugin if the plugin expects certain symbols to
+be present at compile time. In &lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5#autobots-roll-out&quot;&gt;Part 5&lt;/a&gt;, the transformer created expected an
+annotation &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DebugLog&lt;/code&gt; to be present. In practice this annotation would be provided by a support
+library which the Gradle plugin can automatically add to the dependencies of the project.&lt;/p&gt;
+
+&lt;p&gt;A support library is just another Kotlin project and is set up in the same way. The interesting part
+happens when you want to automatically include this project as a dependency when your compiler
+plugin is applied to a project. To do this, we’ll need to go all the way back to
+&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-1#gradle-plugin&quot;&gt;Part 1&lt;/a&gt; when we configured the Gradle &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;KotlinCompilerPluginSupportPlugin&lt;/code&gt;
+class. Using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;applyToCompilation&lt;/code&gt; override function we can add a dependency to the project using
+the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kotlinCompilation&lt;/code&gt; parameter.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;applyToCompilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;kotlinCompilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;KotlinCompilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Provider&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;List&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;SubpluginOption&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;kotlinCompilation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;dependencies&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nf&quot;&gt;implementation&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;${BuildConfig.ANNOTATION_LIBRARY_GROUP}:${BuildConfig.ANNOTATION_LIBRARY_NAME}:${BuildConfig.ANNOTATION_LIBRARY_VERSION}&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+  
+  &lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;Here we are adding the annotation library to the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;implementation&lt;/code&gt; dependency configuration. The
+coordinates of the annotation library are automatically generated with the [buildconfig] Gradle
+plugin.&lt;/p&gt;
+
+&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nf&quot;&gt;buildConfig&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+  &lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
+  
+  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;annotationProject&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;project&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;:debuglog-annotation&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;buildConfigField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;String&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ANNOTATION_LIBRARY_GROUP&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;${annotationProject.group}\&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;buildConfigField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;String&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ANNOTATION_LIBRARY_NAME&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;${annotationProject.name}\&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nf&quot;&gt;buildConfigField&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;String&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;ANNOTATION_LIBRARY_VERSION&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;\&quot;${annotationProject.version}\&quot;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
+
+&lt;p&gt;By adding this configuration to the Gradle plugin, the user of your compiler plugin does not need to
+worry about explicitly adding the support library to the list of dependencies.&lt;/p&gt;
+
+&lt;blockquote&gt;
+  &lt;p&gt;There is an open issue against Kotlin, &lt;a href=&quot;https://youtrack.jetbrains.com/issue/KT-43385&quot;&gt;KT-43385&lt;/a&gt;, for an issue with IntelliJ and AndroidStudio
+not properly resolving dependencies added in this way. Gradle successfully builds the project, but
+the IDE will render the code with errors.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;publishing&quot;&gt;Publishing&lt;/h1&gt;
+
+&lt;p&gt;I’ll keep this section short because I claim no expertise on this subject and there are many better
+guides available depending on what you are trying to achieve. However, I wanted to point out a
+couple things I have found helpful which will hopefully get you on the right path.&lt;/p&gt;
+
+&lt;p&gt;To publish the Gradle plugin, you can use the officially supported &lt;a href=&quot;https://plugins.gradle.org/docs/publish-plugin&quot;&gt;&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;plugin-publish&lt;/code&gt; Gradle plugin
+from the Gradle team&lt;/a&gt;. This will require an account with Gradle and &lt;a href=&quot;https://plugins.gradle.org/docs/submit&quot;&gt;there is a list
+of steps to follow available&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To publish all the Kotlin projects (plugin, native plugin, and optional support library), you will
+need to use a Maven repository host. Two common options are &lt;a href=&quot;https://bintray.com/&quot;&gt;Bintray by JFrog&lt;/a&gt; and &lt;a href=&quot;https://oss.sonatype.org/&quot;&gt;Nexus
+by Sonatype&lt;/a&gt;. Nexus is what I use to sync with MavenCentral but &lt;a href=&quot;https://central.sonatype.org/pages/ossrh-guide.html&quot;&gt;there are many steps to
+complete&lt;/a&gt; before you are allowed to publish. Bintray can be much easier to upload with
+the requirement of specifying additional Gradle repositories on the consumption side.&lt;/p&gt;
+
+&lt;p&gt;Publishing is a tricky topic and there are a lot of different ways to get your plugin in other
+people’s hands. I find it easiest to explore publication Gradle code in other projects so I will
+link a few which I use as reference. Many take advantage of the &lt;a href=&quot;https://github.com/vanniktech/gradle-maven-publish-plugin&quot;&gt;gradle-maven-publish-plugin&lt;/a&gt; plugin
+to perform publishing but I have no personal experience with it.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/cashapp/exhaustive/blob/trunk/gradle/publish.gradle&quot;&gt;exhaustive by Square&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/ZacSweers/redacted-compiler-plugin/blob/main/build.gradle&quot;&gt;redacted-compiler-plugin by Zac Sweers&lt;/a&gt;&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://github.com/bnorm/kotlin-power-assert/blob/master/kotlin-power-assert-plugin/build.gradle.kts#L55&quot;&gt;kotlin-power-assert by Brian Norman&lt;/a&gt; (yes, I constantly reference my own)&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h1 id=&quot;integration-testing&quot;&gt;Integration Testing&lt;/h1&gt;
+
+&lt;p&gt;If you want to test local changes of your Kotlin compiler plugin, there is an extremely handy
+feature in Gradle called &lt;a href=&quot;https://docs.gradle.org/current/userguide/composite_builds.html&quot;&gt;composite builds&lt;/a&gt;. This is very similar to multi-project builds, instead
+of doing it at the dependency level, you configure it at the root of the project. The documentation
+for this feature is excellent, and while the documentation makes it obvious what the benefits are
+for project level dependencies, it doesn’t mention that dependency substitution also works at the
+build dependency level (ie, Gradle plugins).&lt;/p&gt;
+
+&lt;p&gt;Composite builds allow for testing your Kotlin compiler plugin against a local project without the
+need of publishing to a remote or local repository. If you include the build of your Kotlin compiler
+plugin project in another Gradle project, the Gradle plugin and all other dependencies will be
+substituted with the local compiler plugin project artifacts.&lt;/p&gt;
+
+&lt;p&gt;To illustrate this, create a directory in you Kotlin compiler plugin project called &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sample&lt;/code&gt;. Fill
+this directory with a Gradle project, wrapper and all, that uses the Kotlin compiler plugin. In the
+&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;settings.gradle&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;settings.gradle.kts&lt;/code&gt; files you can add &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;includeBuild(&quot;..&quot;)&lt;/code&gt; and when you build
+the project in the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;sample&lt;/code&gt; directory, it will automatically build and use the Kotlin compiler
+plugin in the parent directory. You can see an example of this at work in the
+&lt;a href=&quot;https://github.com/bnorm/debuglog/tree/main/debuglog-integration&quot;&gt;debuglog&lt;/a&gt; repository.&lt;/p&gt;
+
+&lt;p&gt;This is extremely useful for all kinds of testing, especially when you want to perform integration
+testing against all of Kotlin’s platforms. While unit testing allows you to test Kotlin/JVM
+compilation, I have not found anything for unit testing Kotlin/Native compilation.&lt;/p&gt;
+
+&lt;hr /&gt;
+
+&lt;p&gt;Thanks for reading my series of articles about Kotlin IR and writing a Kotlin compiler plugin! If
+you would like to explore a simple, working Kotlin compiler plugin created for this article series,
+you can check out the &lt;a href=&quot;https://github.com/bnorm/debuglog&quot;&gt;debuglog&lt;/a&gt; repository.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 5 — Transforming Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 5 — Transforming Kotlin IR" /><published>2020-12-19T00:00:00+00:00</published><updated>2020-12-19T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5">&lt;blockquote&gt;
   &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
 the compiler plugin API is Experimental. As such, information contained in this article about IR
 and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
@@ -14,7 +139,7 @@ now have the tools needed to transform Kotlin IR. This is a long one, so let’s
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 6 - Support Library and Project Publication&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&quot;déjà-vu&quot;&gt;Déjà Vu&lt;/h1&gt;
@@ -418,10 +543,6 @@ Hello, World!
 
 &lt;hr /&gt;
 
-&lt;p&gt;Next week I’ll show how to create a support library for your compiler plugin which can contain
-annotations and other things needed by your compiler plugin. Also I’ll give some general guidance on
-publishing your library to be used in another project.&lt;/p&gt;
-
 &lt;p&gt;I know this article was longer than usual and full of a lot of new things, but see if you can put
 the pieces together and get something working! Can you make it so &lt;em&gt;all&lt;/em&gt; functions in a &lt;em&gt;class&lt;/em&gt; or
 even &lt;em&gt;file&lt;/em&gt; annotated with &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;@DebugLog&lt;/code&gt; are transformed? (Hint:
@@ -429,9 +550,9 @@ even &lt;em&gt;file&lt;/em&gt; annotated with &lt;code class=&quot;language-plai
 &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irDebugExit&lt;/code&gt; functions abstract so different logging frameworks and message formats could be used
 by different implementations of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;DebugLogTransformer&lt;/code&gt;?&lt;/p&gt;
 
-&lt;p&gt;For the next part in this series I’ll have a working repository of this example compiler plugin for
-you to explore. But in the meantime, if you want to try creating your own Kotlin compiler plugin,
-take a look at the &lt;a href=&quot;https://github.com/bnorm/kotlin-ir-plugin-template&quot;&gt;GitHub template&lt;/a&gt; repository I created.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR" /><published>2020-12-12T00:00:00+00:00</published><updated>2020-12-12T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4">&lt;blockquote&gt;
+&lt;p&gt;If you want to check out a working Kotlin compiler plugin created from all the code snippets above,
+you can check out the [debuglog] repository. And if you want to try creating your own Kotlin
+compiler plugin, take a look at the &lt;a href=&quot;https://github.com/bnorm/kotlin-ir-plugin-template&quot;&gt;GitHub template&lt;/a&gt; repository I created.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 4 — Building Kotlin IR" /><published>2020-12-12T00:00:00+00:00</published><updated>2020-12-12T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4">&lt;blockquote&gt;
   &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
 the compiler plugin API is Experimental. As such, information contained in this article about IR
 and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
@@ -449,7 +570,7 @@ to build them first!&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 6 - Support Library and Project Publication&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&quot;building-context&quot;&gt;Building Context&lt;/h1&gt;
@@ -639,7 +760,7 @@ struggling with the concepts of code generation in general, you might want to ch
 like &lt;a href=&quot;https://square.github.io/kotlinpoet/&quot;&gt;KotlinPoet&lt;/a&gt; which generates Kotlin source code instead of IR and is extremely well documented.
 Since &lt;a href=&quot;https://square.github.io/kotlinpoet/&quot;&gt;KotlinPoet&lt;/a&gt; generates text output it is also easier to experiment with different However, if
 you want to jump feet first into building some Kotlin IR elements, check out my &lt;a href=&quot;https://github.com/bnorm/kotlin-ir-plugin-template&quot;&gt;GitHub template&lt;/a&gt;
-project for IR based Kotlin compile plugins!&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR" /><published>2020-12-05T00:00:00+00:00</published><updated>2020-12-05T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3">&lt;blockquote&gt;
+project for IR based Kotlin compiler plugins!&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin compatibility for IR backend is in Alpha status and the compiler plugin API is Experimental. As such, information contained in this article about IR and compiler plugins could be out-of-date or incorrect. If official documentation exists, please refer to it first.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 3 — Navigating Kotlin IR" /><published>2020-12-05T00:00:00+00:00</published><updated>2020-12-05T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3">&lt;blockquote&gt;
   &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
 the compiler plugin API is Experimental. As such, information contained in this article about IR
 and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
@@ -655,7 +776,7 @@ the Kotlin IR tree and inspect specific elements.&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 6 - Support Library and Project Publication&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&quot;we-got-visitors&quot;&gt;We Got Visitors!&lt;/h1&gt;
@@ -843,7 +964,7 @@ part we will drive right into the structure of Kotlin IR and what it looks like.
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 6 - Support Library and Project Publication&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&quot;foundation&quot;&gt;Foundation&lt;/h1&gt;
@@ -1000,7 +1121,7 @@ parts we will explore navigating and transforming Kotlin IR.&lt;/p&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-3&quot;&gt;Part 3 - Navigating Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-4&quot;&gt;Part 4 - Building Kotlin IR&lt;/a&gt;&lt;/li&gt;
   &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-5&quot;&gt;Part 5 - Transforming Kotlin IR&lt;/a&gt;&lt;/li&gt;
-  &lt;li&gt;Part 6 - Support Library and Project Publication&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6&quot;&gt;Part 6 - Support Libraries, Publishing, and Integration Testing&lt;/a&gt;&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;h1 id=&quot;setup&quot;&gt;Setup&lt;/h1&gt;
@@ -1733,61 +1854,4 @@ risks before using or writing a compiler plugin based on IR.&lt;/p&gt;
 
 &lt;p&gt;And finally, clone and load up the Kotlin git repository. Being able to navigate through all the IR
 code and lowerings was incredibly useful to find examples on how to perform different
-transformations.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin IR is experimental. As such, information contained in this article about IR could be out-of-date or incorrect. If official documentation for Kotlin IR exists, please refer to it first.</summary></entry><entry><title type="html">“Unused” Type Parameters on Kotlin Inline Classes</title><link href="https://blog.bnorm.dev/unused-type-parameters-on-kotlin-inline-classes" rel="alternate" type="text/html" title="“Unused” Type Parameters on Kotlin Inline Classes" /><published>2019-07-29T00:00:00+00:00</published><updated>2019-07-29T00:00:00+00:00</updated><id>https://blog.bnorm.dev/unused-type-parameters-on-kotlin-inline-classes</id><content type="html" xml:base="https://blog.bnorm.dev/unused-type-parameters-on-kotlin-inline-classes">&lt;p&gt;Kotlin introduced inline classes in 1.3 as an experimental feature. They allow wrapping of a single
-value which is inlined at compile time. You can use them for &lt;a href=&quot;https://jakewharton.com/inline-classes-make-great-database-ids&quot;&gt;ID classes&lt;/a&gt; and also for
-&lt;a href=&quot;https://github.com/michaelbull/kotlin-inline-logger&quot;&gt;logging implementations&lt;/a&gt;. They are a great feature with some very interesting use cases.&lt;/p&gt;
-
-&lt;p&gt;“Unused” type parameters can actually be very useful on inline classes. Take the following as an
-example.&lt;/p&gt;
-
-&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;nd&quot;&gt;@Suppress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;unused&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;span class=&quot;k&quot;&gt;inline&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The above defines a Key inline class which has an associated type parameter and inlines to a String.
-The Kotlin compiler claims this type parameter is unused but it can actually be used in function
-signatures.&lt;/p&gt;
-
-&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;private&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;MutableMap&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Any&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;mutableMapOf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Any&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;):&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;?&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;k&quot;&gt;get&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;?.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;it&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-  &lt;span class=&quot;k&quot;&gt;operator&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Any&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;set&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;T&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;n&quot;&gt;map&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;put&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;The above Context class is type safe at compile time but all the type parameter information is
-erased at runtime. Create Keys for all the information you want to store in Context and getting and
-setting will be type safe. &lt;a href=&quot;https://pl.kotl.in/oYL7nQPR6&quot;&gt;Feel free to play around with this example in a Kotlin Playground&lt;/a&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;data class&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;id&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;email&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;k&quot;&gt;companion&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;object&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;idKey&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Int&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;id&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;nameKey&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;name&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-    &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;emailKey&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;String&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;&amp;gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;email&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;person&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;123&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Brian&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;brian@example.com&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;context&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;Context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;idKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;id&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;nameKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;name&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emailKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;email&lt;/span&gt;
-
-  &lt;span class=&quot;c1&quot;&gt;//context[Person.idKey] = person.email // doesn't compile&lt;/span&gt;
-
-  &lt;span class=&quot;nf&quot;&gt;println&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;context&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;[&lt;/span&gt;&lt;span class=&quot;nc&quot;&gt;Person&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;emailKey&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;])&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;I’m interested to see others’ ideas on how this can be used so please share them in the comments!
-Enjoy!&lt;/p&gt;</content><author><name></name></author><summary type="html">Kotlin introduced inline classes in 1.3 as an experimental feature. They allow wrapping of a single value which is inlined at compile time. You can use them for ID classes and also for logging implementations. They are a great feature with some very interesting use cases.</summary></entry></feed>
+transformations.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin IR is experimental. As such, information contained in this article about IR could be out-of-date or incorrect. If official documentation for Kotlin IR exists, please refer to it first.</summary></entry></feed>
