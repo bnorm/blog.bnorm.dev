@@ -487,3 +487,4 @@ compiler plugin, take a look at the [GitHub template] repository I created.
 [TimeMark]: https://kotlinlang.org/api/latest/jvm/stdlib/kotlin.time/-time-mark/
 [ClassLoader]: https://docs.oracle.com/en/java/javase/15/docs/api/java.base/java/lang/ClassLoader.html
 [GitHub template]: https://github.com/bnorm/kotlin-ir-plugin-template
+[debuglog]: https://github.com/bnorm/debuglog
