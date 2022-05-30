@@ -1,4 +1,138 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2022-05-30T17:50:39+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing" /><published>2020-12-26T00:00:00+00:00</published><updated>2020-12-26T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6">&lt;blockquote&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="https://blog.bnorm.dev/feed.xml" rel="self" type="application/atom+xml" /><link href="https://blog.bnorm.dev/" rel="alternate" type="text/html" /><updated>2022-05-30T18:05:01+00:00</updated><id>https://blog.bnorm.dev/feed.xml</id><title type="html">Dev Blog by Brian</title><subtitle>Dev blog by Brian</subtitle><entry><title type="html">Elevating My Rise Garden</title><link href="https://blog.bnorm.dev/elevating-my-rise-garden" rel="alternate" type="text/html" title="Elevating My Rise Garden" /><published>2022-05-30T00:00:00+00:00</published><updated>2022-05-30T00:00:00+00:00</updated><id>https://blog.bnorm.dev/elevating-my-rise-garden</id><content type="html" xml:base="https://blog.bnorm.dev/elevating-my-rise-garden">&lt;blockquote&gt;
+  &lt;p&gt;This post is a bit more of a journal entry than an instruction manual. If you too are someone who dabbles in
+hydroponics, I hope you find this post inspiring, and maybe you’ll want to join me in what I’m building.&lt;/p&gt;
+&lt;/blockquote&gt;
+
+&lt;h1 id=&quot;where-it-all-started&quot;&gt;Where It All Started&lt;/h1&gt;
+
+&lt;p&gt;When the COVID-19 lockdowns started for us in March 2020, my wife and I picked up a number of new hobbies. I was just
+starting to get into outdoor gardening by building some elevated planters for our patio and my wife was getting into
+indoor plants. For both of us, there is just something about tending to and cultivating something that grows. Seeing it
+start small, the little changes each week, and then months later when the plants are huge. And I particularly liked the
+part where you got to eat it! Looking back it is not really a surprise, that once autumn started, I would find
+hydroponic gardening as a way to continue indoors.&lt;/p&gt;
+
+&lt;p&gt;In September 2020, we purchased
+a &lt;a href=&quot;https://risegardens.com/products/triple-indoor-garden&quot;&gt;3 tier Rise Gardens hydroponic system&lt;/a&gt; (I promise this isn’t
+an ad). Really easy to put together, looked good in the house, and had all the tech a software engineer could want. Over
+the next year as we grew everything from herbs to lettuce to peppers to tomatoes, I learned a lot about hydroponic
+gardening and thought of so many, different ways I could make my use of the system better.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-rise-garden.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;project-1--dosing-nutrients&quot;&gt;Project 1 : Dosing Nutrients&lt;/h1&gt;
+
+&lt;p&gt;Nutrients within the water of a hydroponic system are usually measure as EC (electrical conductivity) or PPM (parts per
+million). The pH of the water is also important to measure and maintain. Over the lifetime of the plants within the
+system, the pH should remain constant while the EC is typically increased as the plants get bigger. High levels of EC
+can damage younger plants and not enough EC can cause problems with older plants. It’s a balancing act.&lt;/p&gt;
+
+&lt;p&gt;Most tap water has too high of a pH level so some form of acid needs to be added to lower it to around 6. Adjusting the
+pH of water is pretty easy, and you can get both pH up and pH down mixtures that you add to the water to adjust its
+balance. The amount you add is pretty small, usually measured in milliliters. You can also use a pH “buffer” which is
+a concentrated liquid with a set pH measurement you add to water to resist changes to the pH balance.&lt;/p&gt;
+
+&lt;p&gt;For nutrients, the primary elements for plants are nitrogen (N), phosphorus (P), and potassium (K). There are a number
+of other micronutrients which should also be included, but most fertilizers will include those as well, so you don’t
+need to worry about them too much. Different mixes of N, P, and K are needed by the plants within a hydroponic system
+depending on what stage of development the plant is at. Is the plant still in the vegetative phase, growing tall and
+lots of leaves? This plant will need good amounts of nitrogen and potassium. Is the plant starting to flower or ripening
+fruit? Should lower the potassium and increase the phosphorus.&lt;/p&gt;
+
+&lt;p&gt;All of this water management gets rather tedious. Not because it’s hard, but because measuring out pH balancer and
+liquid nutrients every time you need to add water to the hydroponic system can become time-consuming. Automation to the
+rescue!&lt;/p&gt;
+
+&lt;p&gt;I’m not very good at the hardware side of things, but I’m familiar enough to figure things out. So I grabbed the
+Raspberry PI I had lying around; bought a few peristaltic dosing pumps, relays, and other electronic components; and
+built myself a little dosing station I could use when needing to refill my hydroponic system with water.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-dosing-station.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To activate the dosing pumps I need to manipulate the GPIO pings on the Raspberry PI. For this I
+used &lt;a href=&quot;https://pi4j.com/&quot;&gt;Pi4J&lt;/a&gt;. Pi4J is a nice Java library for working with all the I/O capabilities of a Raspberry PI.
+I built a &lt;a href=&quot;https://ktor.io/&quot;&gt;Ktor&lt;/a&gt; server around this, so I could activate each pump from a REST API. I ran the server
+as a Docker container on the Raspberry PI for easy deployment and updating. Then I built a really
+simple &lt;a href=&quot;https://developer.android.com/jetpack/compose&quot;&gt;Jetpack Compose&lt;/a&gt; Android app to call that REST API.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-android-pumps.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Combine all of this, and I could now dose out exact measurements of pH balancer and nutrients from my Android phone -
+without having to hand measure everything - whenever I was adding water to the hydroponic system. But I wanted more! Or
+rather, to have to do less.&lt;/p&gt;
+
+&lt;h1 id=&quot;project-2--water-measurements&quot;&gt;Project 2 : Water Measurements&lt;/h1&gt;
+
+&lt;p&gt;Each time I would add water to the hydroponic system, I would measure the EC and pH level of the system to know how much
+pH balancer and nutrients I needed to add. Again, while not difficult, this was another step which needed to be manually
+performed each time water was added. Plus, I now had a station which could dose out nutrients. If only I could get
+readings of the pH level and EC into the Raspberry PI, I would only need to add water to the system and nutrients could
+be added automatically.&lt;/p&gt;
+
+&lt;p&gt;This is when I splurged and got myself some &lt;a href=&quot;https://atlas-scientific.com/&quot;&gt;Atlas Scientific&lt;/a&gt; sensors. These sensors are
+really high quality and can be submerged within the water of the hydroponic system indefinitely. They also sell a hat
+for connecting these sensors to a Rasbperry PI, which made integration incredible easy.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-dosing-auto-1.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once these sensors were hooked up to the Rasberry PI, I updated the Ktor server I had to take a pH and EC reading every
+minute. I stored these measurements in a SQLite database Using &lt;a href=&quot;https://cashapp.github.io/sqldelight/&quot;&gt;SQLDelight&lt;/a&gt; on
+the Raspberry PI, and created REST endpoints to be able to retrieve them. Then I updated the Android app to show a graph
+for each sensor of the readings taken.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-android-graphs.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, I tucked the Raspberry PI into the hydroponic system, put the nutrient dispenser over the water reservoir, and
+created a schedule which automatically check the pH and EC levels of the reservoir and dose out adjustments as needed.
+All I had to do now was to add water or adjust the constraints of the pH and EC levels, and the system would take care
+of itself.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-dosing-auto-2.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;project-3--taking-it-to-the-cloud&quot;&gt;Project 3 : Taking it to the Cloud&lt;/h1&gt;
+
+&lt;p&gt;With everything so automated, I was having fun looking at graphs of the sensors readings and making adjustments to the
+dosing constraints and schedule. But this is where I was a little sad: I couldn’t really show anyone. See with me not
+wanting to expose the Raspberry PI server to the internet, I could only really use the Android app when I was on my
+local network. This meant I couldn’t really show off all my work unless someone was over at our house. That’s no fun; I
+wanted to show everyone what I had created!&lt;/p&gt;
+
+&lt;p&gt;So I started by getting a &lt;a href=&quot;https://www.digitalocean.com/&quot;&gt;Digital Ocean&lt;/a&gt; droplet created with Docker installed. Set
+about securing that droplet with &lt;a href=&quot;https://www.nginx.com/&quot;&gt;Nginx&lt;/a&gt; and added a &lt;a href=&quot;https://www.mongodb.com/&quot;&gt;MongoDB&lt;/a&gt; Docker
+container as well. Then I built yet another server - this time
+with &lt;a href=&quot;https://spring.io/projects/spring-boot&quot;&gt;Spring Boot&lt;/a&gt; - to expose a REST API for users, devices, and sensors which
+could be used by the Raspberry PI.&lt;/p&gt;
+
+&lt;p&gt;Sensor readings can be submitted directly to the API. And to dose out nutrients, the Raspberry PI connects to a
+websocket, and the server forwards actions which need to be performed. This also allowed me to know if the Raspberry PI
+is currently connected, since I could flip a flag whenever the Raspberry PI connected to or disconnected from the
+websocket.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-android-devices.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This also allows you to now log in to the incredibly basic website - built
+with &lt;a href=&quot;https://compose-web.ui.pages.jetbrains.team/&quot;&gt;Compose for Web&lt;/a&gt;, a natural pairing for the Android app - and check
+out how my hydroponic system is doing! All the code and guest login information can be found on GitHub, in
+the &lt;a href=&quot;https://github.com/bnorm/elevated&quot;&gt;elevated&lt;/a&gt; repository readme.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;/assets/elevated-webpage.png&quot; alt=&quot;&quot; /&gt;&lt;/p&gt;
+
+&lt;h1 id=&quot;project-4--whats-next&quot;&gt;Project 4 : What’s Next?&lt;/h1&gt;
+
+&lt;p&gt;I’m not sure what’s next. Probably small improvements here and there, particularly in the UI portions of the project.
+There’s also a large number of hardcoded things throughout the project which I would like to remove to truly support
+multiple Raspberry PIs. I’d also like to add a few more sensors, to be able to measure the water level for example, so
+the server can send me a notification when I need to add water. But in general I’ve been having a lot of fun working
+with such a wide range of things: from software to hardware, from backend to frontend, and all the different libraries
+and frameworks available within the Kotlin ecosystem.&lt;/p&gt;
+
+&lt;h1 id=&quot;summary&quot;&gt;Summary&lt;/h1&gt;
+
+&lt;p&gt;All the code for this project can be found on &lt;a href=&quot;https://github.com/bnorm/elevated&quot;&gt;GitHub&lt;/a&gt;. I’m not really an expert in
+any one particular area (especially not Android or web development) so I welcome any and all contributions to the
+project. And ff you found this inspiring, have your own hydroponics system, and want to do something similar to what I
+have done, hit me up on &lt;a href=&quot;https://twitter.com/bnormcodes&quot;&gt;Twitter&lt;/a&gt;! Maybe we can get your Raspberry PI automatically
+measuring and dispensing nutrients as well!&lt;/p&gt;</content><author><name></name></author><summary type="html">This post is a bit more of a journal entry than an instruction manual. If you too are someone who dabbles in hydroponics, I hope you find this post inspiring, and maybe you’ll want to join me in what I’m building.</summary></entry><entry><title type="html">Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing</title><link href="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6" rel="alternate" type="text/html" title="Writing Your Second Kotlin Compiler Plugin, Part 6 — Support Libraries, Publishing, and Integration Testing" /><published>2020-12-26T00:00:00+00:00</published><updated>2020-12-26T00:00:00+00:00</updated><id>https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6</id><content type="html" xml:base="https://blog.bnorm.dev/writing-your-second-compiler-plugin-part-6">&lt;blockquote&gt;
   &lt;p&gt;At the time of writing this article, &lt;a href=&quot;https://kotlinlang.org/docs/reference/evolution/components-stability.html&quot;&gt;Kotlin compatibility&lt;/a&gt; for IR backend is in Alpha status and
 the compiler plugin API is Experimental. As such, information contained in this article about IR
 and compiler plugins could be out-of-date or incorrect. If official documentation exists, please
@@ -1690,168 +1824,4 @@ password.&lt;/p&gt;
 &lt;blockquote&gt;
   &lt;p&gt;Disclaimer: I’m not a security expert. This password example is meant to be just that, an example.
 Make sure you are always following best practices when dealing with sensitive information.&lt;/p&gt;
-&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">I like to follow the kotlinx.coroutines library closely on GitHub. Not really because I have anything to contribute, but because there is so much to learn!</summary></entry><entry><title type="html">Exploring Kotlin IR</title><link href="https://blog.bnorm.dev/exploring-kotlin-ir" rel="alternate" type="text/html" title="Exploring Kotlin IR" /><published>2020-02-10T00:00:00+00:00</published><updated>2020-02-10T00:00:00+00:00</updated><id>https://blog.bnorm.dev/exploring-kotlin-ir</id><content type="html" xml:base="https://blog.bnorm.dev/exploring-kotlin-ir">&lt;blockquote&gt;
-  &lt;p&gt;At the time of writing this article, Kotlin IR is experimental. As such, information contained in
-this article about IR could be out-of-date or incorrect. If official documentation for Kotlin IR
-exists, please refer to it first.&lt;/p&gt;
-&lt;/blockquote&gt;
-
-&lt;p&gt;Ever since learning about them, I’ve been very interested in Kotlin compiler plugins. Even the
-&lt;a href=&quot;https://github.com/JetBrains/kotlin/tree/master/plugins&quot;&gt;limited list of official supported plugins&lt;/a&gt; hint at the potential available. A
-plugin like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kotlin-serialization&lt;/code&gt; shows how it is possible to generate code for &lt;a href=&quot;https://en.wikipedia.org/wiki/Marshalling_(computer_science)&quot;&gt;marshalling&lt;/a&gt; a
-Kotlin class. A plugin like &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;allopen&lt;/code&gt; shows it’s possible to transform classes to be non-final at
-runtime. It is Java annotation processing; but with more power.&lt;/p&gt;
-
-&lt;p&gt;My adventure into this world started a few months ago when I once again looked longingly at a Groovy
-language feature called &lt;a href=&quot;https://groovy-lang.org/testing.html#_power_assertions&quot;&gt;Power Assertions&lt;/a&gt;. If you are unfamiliar with this language
-feature, &lt;a href=&quot;https://dontmindthelanguage.wordpress.com/2009/12/11/groovy-1-7-power-assert/&quot;&gt;it was original developed by the Spock testing framework, and introduced in Groovy 1.7&lt;/a&gt;. Its goal is to show the value of everything involved in the assertion which
-failed.&lt;/p&gt;
-
-&lt;div class=&quot;language-groovy highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;
-&lt;span class=&quot;n&quot;&gt;b&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9&lt;/span&gt;
- 
-&lt;span class=&quot;k&quot;&gt;assert&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;91&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;a&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;b&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// Output:             &lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// Exception thrown&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// Assertion failed: &lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// assert 91 == a * b&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//           |  | | |&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//           |  10| 9&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//           |    90&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//           false&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//     at ConsoleScript2.run(ConsoleScript2:4)&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This context as to why the assertion failed is indeed something to desire. Many libraries in the JVM
-ecosystem (AssertJ, Hamcrest, Truth, Kluent, Atrium, Strikt, etc) provide meaningful error messages
-but they are usually limited to the known types of the library. Many of these libraries have ways to
-provide custom assertion extensions so you can provide something meaningful when testing your own
-classes. But I’ve always seen this as boiler plate and found it tedious to write.&lt;/p&gt;
-
-&lt;h1 id=&quot;introducing-kotlin-power-assert&quot;&gt;Introducing: kotlin-power-assert&lt;/h1&gt;
-
-&lt;p&gt;&lt;a href=&quot;https://github.com/bnorm/kotlin-power-assert&quot;&gt;kotlin-power-assert&lt;/a&gt; is a Kotlin compiler plugin which finds every call to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;kotlin.assert(...)&lt;/code&gt; and
-transforms it to include all the expressions in the assertion in the error message.&lt;/p&gt;
-
-&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;hello&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Hello&quot;&lt;/span&gt;
-&lt;span class=&quot;nf&quot;&gt;assert&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;hello&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;==&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;World&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;substring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;length&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;Incorrect length&quot;&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;c1&quot;&gt;// Output:&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// java.lang.AssertionError: Incorrect length&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;// assert(hello.length == &quot;World&quot;.substring(1, 4).length)&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        |     |      |          |               |&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        |     |      |          |               3&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        |     |      |          orl&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        |     |      false&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        |     5&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//        Hello&lt;/span&gt;
-&lt;span class=&quot;c1&quot;&gt;//         at &amp;lt;stacktrace&amp;gt;&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;This is done via an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrGenerationExtension&lt;/code&gt; which is a specific kind of extension to the Kotlin
-compiler. From this extension point, you are given access to the IR layout of the file being
-compiled and are allowed to transform it before the Kotlin compiler continues to the next phase of
-compilation.&lt;/p&gt;
-
-&lt;p&gt;If you want to learn more about the architecture of Kotlin compiler plugins I highly recommend
-watching &lt;a href=&quot;https://www.youtube.com/watch?v=w-GMlaziIyo&quot;&gt;Kevin Most’s presentation from KotlinConf 2018&lt;/a&gt; which goes
-into details not covered here.&lt;/p&gt;
-
-&lt;h1 id=&quot;kotlin-ir&quot;&gt;Kotlin IR&lt;/h1&gt;
-
-&lt;p&gt;Kotlin IR, or Kotlin Intermediate Representation, is the new internal representation used by the
-Kotlin compiler when it parses Kotlin source files. It uses this representation to than perform a
-series of &lt;a href=&quot;https://github.com/JetBrains/kotlin/tree/master/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower&quot;&gt;“lowerings”&lt;/a&gt; which transform the code.&lt;/p&gt;
-
-&lt;p&gt;These lowering operations include &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/master/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower/TailrecLowering.kt&quot;&gt;tailrec transformation&lt;/a&gt;, &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/master/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower/StringConcatenationLowering.kt&quot;&gt;string concatenation
-to StringBuilder&lt;/a&gt;, &lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/master/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower/AbstractSuspendFunctionsLowering.kt&quot;&gt;suspend function transformation&lt;/a&gt;, and
-&lt;a href=&quot;https://github.com/JetBrains/kotlin/blob/master/compiler/ir/backend.common/src/org/jetbrains/kotlin/backend/common/lower/loops/ForLoopsLowering.kt&quot;&gt;for-loop optimizations&lt;/a&gt;. These lowerings are then performed in phases, with more
-general transformations performed first. Once all lowerings are complete, each compiler backend, one
-for each supported platform (JVM, JS, or Native), takes the IR and translates it into the platform
-specific representation.&lt;/p&gt;
-
-&lt;p&gt;By using an intermediate representation, the Kotlin compiler is able to share lowerings across all
-the compiler backends. It also allows developers to write a single compiler plugin which will work
-on all platforms. Otherwise a plugin which wants to support all Kotlin platforms would need to write
-a transformation for each platform specific representation.&lt;/p&gt;
-
-&lt;h1 id=&quot;transfroming-kotlin-ir&quot;&gt;Transfroming Kotlin IR&lt;/h1&gt;
-
-&lt;p&gt;Kotlin IR is represented as a tree of elements. To navigate, you can use an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrElementVisitor&lt;/code&gt; which
-will visit each &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrElement&lt;/code&gt;. If you want to transform the code, you can use an
-&lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrElementTransformer&lt;/code&gt; which will allow you to manipulate the elements visited and even return a
-completely different element in place of the one being visited. To create an IR tree of your own,
-you can use the &lt;a href=&quot;https://github.com/JetBrains/kotlin/tree/master/compiler/ir/ir.tree/src/org/jetbrains/kotlin/ir/builders&quot;&gt;many builder functions&lt;/a&gt; available.&lt;/p&gt;
-
-&lt;p&gt;As Kotlin IR is still experimental, only a few of the official compiler plugins have been converted
-to also support IR. However, many lowerings are currently available which provide good examples to
-explore.&lt;/p&gt;
-
-&lt;h1 id=&quot;transforming-assert-calls&quot;&gt;Transforming assert() Calls&lt;/h1&gt;
-
-&lt;p&gt;So with a little background on Kotlin IR, how is the assertion function transformed to include
-additional information?&lt;/p&gt;
-
-&lt;p&gt;It all starts with an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrElementTransformer&lt;/code&gt; which navigates the IR tree and visits each instance of
-an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrCall&lt;/code&gt;. This represents every call to any function. If the function being called is &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;assert()&lt;/code&gt;,
-then the call needs to be transformed.&lt;/p&gt;
-
-&lt;p&gt;Next, the IR tree is navigated from that point, finding every instance of an &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrExpression&lt;/code&gt;. An
-expression is anything that can return a value: function calls, variable/field access, constants,
-if/when expressions, etc.&lt;/p&gt;
-
-&lt;p&gt;Then every &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrExpression&lt;/code&gt; found is moved to a temporary variable (via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irTemporary&lt;/code&gt; builder) and
-replaced with an access expression to the temporary variable (via &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irGet&lt;/code&gt; builder). This allows the
-error message to access the same temporary variables used by the assertion condition.&lt;/p&gt;
-
-&lt;p&gt;Once the assertion expressions are transformed, the assertion call is replaced with a series of &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;if&lt;/code&gt;
-statements (using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irIfThen&lt;/code&gt; builder) and throw statements (using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irThrow&lt;/code&gt; builder). The
-constructor call to &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;AssertionError&lt;/code&gt; can then include all the temporary variables, formatted
-appropriately and include the source code of the original &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;assert()&lt;/code&gt; call.&lt;/p&gt;
-
-&lt;p&gt;Finally, to get the source code for the original &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;assert()&lt;/code&gt; call, start with getting the source code
-for the entire file. This can be accessed through visiting the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrFile&lt;/code&gt; and using the path extension
-function to get the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;path&lt;/code&gt; to the source file being compiled. From there, source code range
-information can be retrieved from each &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrElement&lt;/code&gt; using the &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;fileEntry&lt;/code&gt; from the parent &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;IrFile&lt;/code&gt;.&lt;/p&gt;
-
-&lt;div class=&quot;language-kotlin highlighter-rouge&quot;&gt;&lt;div class=&quot;highlight&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;visitFile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;declaration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrFile&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrFile&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;declaration&lt;/span&gt;
-  &lt;span class=&quot;n&quot;&gt;fileSource&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;File&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;declaration&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;path&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;readText&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
-  &lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-
-&lt;span class=&quot;k&quot;&gt;override&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;fun&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;visitCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expression&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrCall&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;):&lt;/span&gt; &lt;span class=&quot;nc&quot;&gt;IrExpression&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;callSource&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;fileSource&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;substring&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expression&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;startOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expression&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;endOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
-  &lt;span class=&quot;kd&quot;&gt;val&lt;/span&gt; &lt;span class=&quot;py&quot;&gt;callIndent&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fileEntry&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;getSourceRangeInfo&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;expression&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;startOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;expression&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;endOffset&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;startColumnNumber&lt;/span&gt;
-  &lt;span class=&quot;o&quot;&gt;..&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;
-&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
-&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;/div&gt;
-
-&lt;p&gt;Putting all this information together, the expression temporary variables are sorted based on start
-column and included in the assertion message string with some “fancy” formatting (using &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irConcat&lt;/code&gt;
-and &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;irString&lt;/code&gt; builders).&lt;/p&gt;
-
-&lt;p&gt;Unfortunately, in reality it is more complicated that what was just described. Boolean expression
-which include &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;&amp;amp;&amp;amp;&lt;/code&gt; or &lt;code class=&quot;language-plaintext highlighter-rouge&quot;&gt;||&lt;/code&gt; tend to make things more complicated due to &lt;a href=&quot;https://en.wikipedia.org/wiki/Short-circuit_evaluation&quot;&gt;short-circuiting&lt;/a&gt;. But
-hopefully this simplification helps you understand what is going on behind the scenes.&lt;/p&gt;
-
-&lt;h1 id=&quot;writing-your-own-plugin&quot;&gt;Writing Your Own Plugin&lt;/h1&gt;
-
-&lt;p&gt;If you have an idea for a Kotlin compiler plugin, the first thing I recommend is to use the
-fantastic library &lt;a href=&quot;https://github.com/tschuchortdev/kotlin-compile-testing&quot;&gt;kotlin-compile-testing&lt;/a&gt;. This library will allow you to compile code in unit
-tests and to even load the compiled code so you can test it’s behavior.&lt;/p&gt;
-
-&lt;p&gt;The second thing I recommend is to set your expectations correctly. As Kotlin IR is still
-experimental, there are still a number of things which do not work well. It could be a while before
-Kotlin IR is the default mode for the Kotlin compiler. Make sure you are comfortable with these
-risks before using or writing a compiler plugin based on IR.&lt;/p&gt;
-
-&lt;p&gt;And finally, clone and load up the Kotlin git repository. Being able to navigate through all the IR
-code and lowerings was incredibly useful to find examples on how to perform different
-transformations.&lt;/p&gt;</content><author><name></name></author><summary type="html">At the time of writing this article, Kotlin IR is experimental. As such, information contained in this article about IR could be out-of-date or incorrect. If official documentation for Kotlin IR exists, please refer to it first.</summary></entry></feed>
+&lt;/blockquote&gt;</content><author><name></name></author><summary type="html">I like to follow the kotlinx.coroutines library closely on GitHub. Not really because I have anything to contribute, but because there is so much to learn!</summary></entry></feed>
